@@ -10,6 +10,8 @@ window.addEventListener('load', () => {
     let cart = [];
     let checkoutHistory = [];
     let demoBalance = 23000000;
+    let productSelections = {}; // Store color and capacity selections per product
+    let customProductSelections = {}; // Store custom product selections (color, ram, capacity)
 
     // ------------------------------------------------------
     // 1.5. LOCALSTORAGE FUNCTIONS
@@ -18,6 +20,8 @@ window.addEventListener('load', () => {
         localStorage.setItem('demoBalance', demoBalance);
         localStorage.setItem('cart', JSON.stringify(cart));
         localStorage.setItem('checkoutHistory', JSON.stringify(checkoutHistory));
+        localStorage.setItem('productSelections', JSON.stringify(productSelections));
+        localStorage.setItem('customProductSelections', JSON.stringify(customProductSelections));
     }
 
     function loadFromLocalStorage() {
@@ -34,6 +38,16 @@ window.addEventListener('load', () => {
         const savedHistory = localStorage.getItem('checkoutHistory');
         if (savedHistory) {
             checkoutHistory = JSON.parse(savedHistory);
+        }
+
+        const savedSelections = localStorage.getItem('productSelections');
+        if (savedSelections) {
+            productSelections = JSON.parse(savedSelections);
+        }
+
+        const savedCustomSelections = localStorage.getItem('customProductSelections');
+        if (savedCustomSelections) {
+            customProductSelections = JSON.parse(savedCustomSelections);
         }
     }
 
@@ -123,8 +137,16 @@ window.addEventListener('load', () => {
                 block.innerHTML = `<h4>Checkout ${n + 1}</h4>`;
 
                 group.forEach(item => {
+                    let displayName = item.name;
+                    if (item.color && item.capacity) {
+                        if (item.ram) {
+                            displayName += ` (${item.color}, ${item.ram}, ${item.capacity})`;
+                        } else {
+                            displayName += ` (${item.color}, ${item.capacity})`;
+                        }
+                    }
                     block.innerHTML += `
-                        <p><strong>${item.name}</strong> — 
+                        <p><strong>${displayName}</strong> —
                         ${rupiah(item.price)} × ${item.quantity} =
                         <strong>${rupiah(item.price * item.quantity)}</strong>
                         </p>`;
@@ -153,9 +175,14 @@ window.addEventListener('load', () => {
             const subtotal = item.price * item.quantity;
             total += subtotal;
 
+            let displayName = item.name;
+            if (item.color && item.capacity) {
+                displayName += ` (${item.color}, ${item.capacity})`;
+            }
+
             line.className = 'cart-item-detail';
             line.innerHTML = `
-                <p><strong>${item.name}</strong></p>
+                <p><strong>${displayName}</strong></p>
                 <p>${rupiah(item.price)} × ${item.quantity} =
                    <strong>${rupiah(subtotal)}</strong></p>
                 <button class="remove-item" data-idx="${idx}">Hapus</button>
@@ -399,7 +426,94 @@ window.addEventListener('load', () => {
     };
 
     // ------------------------------------------------------
-    // 11. APPLE PRODUCTS BUY BUTTON
+    // 11. COLOR AND CAPACITY SELECTION LOGIC
+    // ------------------------------------------------------
+    function initializeProductSelections() {
+        document.querySelectorAll('.apple-product').forEach(product => {
+            const productId = product.dataset.appleId;
+            const basePrice = parseInt(product.dataset.basePrice);
+
+            // Initialize selections if not exists
+            if (!productSelections[productId]) {
+                productSelections[productId] = {
+                    color: 'Space Gray',
+                    capacity: '128 GB',
+                    price: basePrice
+                };
+            }
+
+            // Update price display
+            updatePriceDisplay(productId);
+        });
+    }
+
+    function updatePriceDisplay(productId) {
+        const selection = productSelections[productId];
+        if (!selection) return;
+
+        const priceDisplay = document.getElementById(`price-display-${productId}`);
+        if (priceDisplay) {
+            priceDisplay.textContent = `Harga: ${rupiah(selection.price)}`;
+        }
+    }
+
+    // Color selection logic
+    document.querySelectorAll('.color-circle').forEach(circle => {
+        circle.addEventListener('click', function() {
+            const productId = this.closest('.color-options').dataset.productId;
+            const color = this.dataset.color;
+
+            // Update selection
+            productSelections[productId].color = color;
+
+            // Update UI
+            document.querySelectorAll(`.color-options[data-product-id="${productId}"] .color-circle`).forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Update display name
+            const displayName = document.getElementById(`selected-color-name-${productId}`);
+            if (displayName) {
+                displayName.textContent = color;
+            }
+
+            // Save to localStorage
+            saveToLocalStorage();
+
+            console.log(`Warna dipilih untuk ${productId}:`, color);
+        });
+    });
+
+    // Capacity selection logic
+    document.querySelectorAll('.capacity-box').forEach(box => {
+        box.addEventListener('click', function() {
+            const productId = this.closest('.capacity-options').dataset.productId;
+            const capacity = this.dataset.capacity;
+            const basePrice = parseInt(document.querySelector(`[data-apple-id="${productId}"]`).dataset.basePrice);
+
+            // Calculate new price
+            const priceCalculator = new ProductPrice(basePrice);
+            const newPrice = priceCalculator.calculatePrice(capacity);
+
+            // Update selection
+            productSelections[productId].capacity = capacity;
+            productSelections[productId].price = newPrice;
+
+            // Update UI
+            document.querySelectorAll(`.capacity-options[data-product-id="${productId}"] .capacity-box`).forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Update price display
+            updatePriceDisplay(productId);
+
+            // Save to localStorage
+            saveToLocalStorage();
+
+            console.log(`Kapasitas dipilih untuk ${productId}:`, capacity, `Harga:`, rupiah(newPrice));
+        });
+    });
+
+    // ------------------------------------------------------
+    // 12. APPLE PRODUCTS BUY BUTTON
     // ------------------------------------------------------
     let currentAppleProduct = null;
 
@@ -407,13 +521,25 @@ window.addEventListener('load', () => {
         btn.onclick = () => {
             const product = btn.closest('.apple-product');
             const name = product.querySelector('.apple-title').textContent;
-            const price = parseInt(product.dataset.price);
             const id = product.dataset.appleId;
 
-            currentAppleProduct = { id, name, price };
+            // Get current selections
+            const selection = productSelections[id];
+            if (!selection) {
+                notify('Silakan pilih warna dan kapasitas terlebih dahulu');
+                return;
+            }
 
-            document.getElementById('apple-product-name').textContent = name;
-            document.getElementById('apple-product-price').textContent = rupiah(price);
+            currentAppleProduct = {
+                id,
+                name,
+                price: selection.price,
+                color: selection.color,
+                capacity: selection.capacity
+            };
+
+            document.getElementById('apple-product-name').textContent = `${name} (${selection.color}, ${selection.capacity})`;
+            document.getElementById('apple-product-price').textContent = rupiah(selection.price);
             document.getElementById('apple-quantity').textContent = '1';
 
             document.getElementById('apple-quantity-modal').style.display = 'flex';
@@ -442,23 +568,29 @@ window.addEventListener('load', () => {
 
         const quantity = parseInt(document.getElementById('apple-quantity').textContent);
 
-        const exist = cart.find(i => i.id === currentAppleProduct.id);
+        // Create unique ID that includes color and capacity
+        const uniqueId = `${currentAppleProduct.id}-${currentAppleProduct.color}-${currentAppleProduct.capacity}`;
+
+        const exist = cart.find(i => i.uniqueId === uniqueId);
 
         if (exist) {
             exist.quantity += quantity;
         } else {
             cart.push({
                 id: currentAppleProduct.id,
+                uniqueId: uniqueId,
                 name: currentAppleProduct.name,
                 price: currentAppleProduct.price,
-                quantity: quantity
+                quantity: quantity,
+                color: currentAppleProduct.color,
+                capacity: currentAppleProduct.capacity
             });
         }
 
         updateCartCount();
         // Simpan cart ke localStorage setelah add to cart
         saveToLocalStorage();
-        notify(`"${currentAppleProduct.name}" (${quantity}x) ditambahkan ke keranjang`);
+        notify(`"${currentAppleProduct.name} (${currentAppleProduct.color}, ${currentAppleProduct.capacity})" (${quantity}x) ditambahkan ke keranjang`);
 
         // Close modal
         document.getElementById('apple-quantity-modal').style.opacity = 0;
@@ -484,7 +616,149 @@ window.addEventListener('load', () => {
     };
 
     // ------------------------------------------------------
-    // 12. PRODUK UNGGULAN SLIDER
+    // 13. CUSTOM PRODUCT SELECTION LOGIC
+    // ------------------------------------------------------
+    function initializeCustomProductSelections() {
+        document.querySelectorAll('.custom-product-card').forEach(product => {
+            const productId = product.dataset.productId;
+            const basePrice = parseInt(product.dataset.basePrice);
+
+            // Initialize selections if not exists
+            if (!customProductSelections[productId]) {
+                customProductSelections[productId] = {
+                    color: 'Space Gray',
+                    capacity: '128 GB',
+                    price: basePrice
+                };
+            }
+
+            // Update price display
+            updateCustomPriceDisplay(productId);
+        });
+    }
+
+    function updateCustomPriceDisplay(productId) {
+        const selection = customProductSelections[productId];
+        if (!selection) return;
+
+        const priceDisplay = document.getElementById(`custom-price-display-${productId}`);
+        if (priceDisplay) {
+            priceDisplay.textContent = `Harga: ${rupiah(selection.price)}`;
+        }
+    }
+
+    // Custom color selection logic
+    document.querySelectorAll('.custom-color-circle').forEach(circle => {
+        circle.addEventListener('click', function() {
+            const productId = this.closest('.custom-color-options').dataset.productId;
+            const color = this.dataset.color;
+
+            // Update selection
+            customProductSelections[productId].color = color;
+
+            // Update UI
+            document.querySelectorAll(`.custom-color-options[data-product-id="${productId}"] .custom-color-circle`).forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Update display name
+            const displayName = document.getElementById(`custom-selected-color-${productId}`);
+            if (displayName) {
+                displayName.textContent = color;
+            }
+
+            // Save to localStorage
+            saveToLocalStorage();
+
+            console.log(`Warna custom dipilih untuk ${productId}:`, color);
+        });
+    });
+
+
+
+    // Custom capacity selection logic
+    document.querySelectorAll('.custom-capacity-box').forEach(box => {
+        box.addEventListener('click', function() {
+            const productId = this.closest('.custom-capacity-options').dataset.productId;
+            const capacity = this.dataset.capacity;
+            const basePrice = parseInt(document.querySelector(`[data-product-id="${productId}"]`).dataset.basePrice);
+
+            // Calculate new price for iPad Air 13 custom (only 128GB and 256GB)
+            const priceCalculator = new ProductPrice(basePrice);
+            const newPrice = priceCalculator.calculatePriceForIPadAir13(capacity);
+
+            // Update selection
+            customProductSelections[productId].capacity = capacity;
+            customProductSelections[productId].price = newPrice;
+
+            // Update UI
+            document.querySelectorAll(`.custom-capacity-options[data-product-id="${productId}"] .custom-capacity-box`).forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Update display name
+            const displayName = document.getElementById(`custom-selected-capacity-${productId}`);
+            if (displayName) {
+                displayName.textContent = capacity;
+            }
+
+            // Update price display
+            updateCustomPriceDisplay(productId);
+
+            // Save to localStorage
+            saveToLocalStorage();
+
+            console.log(`Kapasitas custom dipilih untuk ${productId}:`, capacity, `Harga:`, rupiah(newPrice));
+        });
+    });
+
+    // Custom add to cart logic
+    document.querySelectorAll('.custom-add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const selection = customProductSelections[productId];
+
+            if (!selection) {
+                notify('Silakan pilih konfigurasi terlebih dahulu');
+                return;
+            }
+
+            const productCard = this.closest('.custom-product-card');
+            const productName = productCard.querySelector('h3').textContent;
+
+            // Create unique ID that includes color and capacity only
+            const uniqueId = `${productId}-${selection.color}-${selection.capacity}`;
+
+            const exist = cart.find(i => i.uniqueId === uniqueId);
+
+            if (exist) {
+                exist.quantity += 1;
+            } else {
+                cart.push({
+                    id: productId,
+                    uniqueId: uniqueId,
+                    name: productName,
+                    price: selection.price,
+                    quantity: 1,
+                    color: selection.color,
+                    capacity: selection.capacity
+                });
+            }
+
+            updateCartCount();
+            saveToLocalStorage();
+            notify(`"${productName} (${selection.color}, ${selection.capacity})" ditambahkan ke keranjang`);
+
+            console.log(`Custom product added:`, selection);
+        });
+    });
+
+    // ------------------------------------------------------
+    // 14. INITIALIZE PRODUCT SELECTIONS
+    // ------------------------------------------------------
+    initializeProductSelections();
+    initializeCustomProductSelections();
+
+    // ------------------------------------------------------
+    // 15. PRODUK UNGGULAN SLIDER
     // ------------------------------------------------------
     function initProdukUnggulanSlider() {
         const container = document.querySelector('.produk-unggulan-section .slider-images');
