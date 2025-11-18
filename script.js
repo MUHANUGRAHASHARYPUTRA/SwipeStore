@@ -11,6 +11,35 @@ window.addEventListener('load', () => {
     let checkoutHistory = [];
     let demoBalance = 23000000;
 
+    // ------------------------------------------------------
+    // 1.5. LOCALSTORAGE FUNCTIONS
+    // ------------------------------------------------------
+    function saveToLocalStorage() {
+        localStorage.setItem('demoBalance', demoBalance);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        localStorage.setItem('checkoutHistory', JSON.stringify(checkoutHistory));
+    }
+
+    function loadFromLocalStorage() {
+        const savedBalance = localStorage.getItem('demoBalance');
+        if (savedBalance !== null) {
+            demoBalance = parseInt(savedBalance);
+        }
+
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+            cart = JSON.parse(savedCart);
+        }
+
+        const savedHistory = localStorage.getItem('checkoutHistory');
+        if (savedHistory) {
+            checkoutHistory = JSON.parse(savedHistory);
+        }
+    }
+
+    // Load data saat halaman load
+    loadFromLocalStorage();
+
     const els = {
         demoBalance: document.getElementById('demo-balance'),
         demoBalanceMobile: document.getElementById('demo-balance-mobile'),
@@ -142,6 +171,8 @@ window.addEventListener('load', () => {
                 cart.splice(btn.dataset.idx, 1);
                 updateCartCount();
                 updateCartModal();
+                // Simpan cart ke localStorage setelah remove item
+                saveToLocalStorage();
             };
         });
     }
@@ -361,6 +392,9 @@ window.addEventListener('load', () => {
         updateCartCount();
         updateCartModal();
 
+        // Simpan ke localStorage setelah checkout
+        saveToLocalStorage();
+
         notify(`Checkout sukses!`);
     };
 
@@ -422,6 +456,8 @@ window.addEventListener('load', () => {
         }
 
         updateCartCount();
+        // Simpan cart ke localStorage setelah add to cart
+        saveToLocalStorage();
         notify(`"${currentAppleProduct.name}" (${quantity}x) ditambahkan ke keranjang`);
 
         // Close modal
