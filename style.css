@@ -434,6 +434,78 @@
   .apple-btn-blue:hover{ background:#0066d6; }
   .apple-img{ width:70%; max-width:420px; margin-top:26px; display:block; margin-left:auto; margin-right:auto; object-fit:cover; background-color: #f9f9f9; border-radius:8px; }
 
+  /* Styling Pilihan Warna */
+  .color-options {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    justify-content: center;
+  }
+
+  .color-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .color-circle.selected {
+    border: 2px solid #007aff;
+    outline: 2px solid #a4c9e4;
+  }
+
+  /* Styling Pilihan Kapasitas */
+  .capacity-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  .capacity-box {
+    padding: 15px 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .capacity-box.selected {
+    border-color: #007aff;
+    outline: 2px solid #a4c9e4;
+  }
+
+  /* ========== Custom Product Selection ========== */
+  .custom-product-section{ padding:60px 5%; background:#f9f9f9; }
+  .custom-product-container{ max-width:1200px; margin:0 auto; }
+  .custom-product-card{ display:flex; gap:40px; background:#fff; border-radius:12px; padding:40px; box-shadow:0 8px 24px rgba(0,0,0,0.1); margin-bottom:40px; }
+  .custom-product-image img{ width:300px; height:300px; object-fit:cover; border-radius:8px; }
+  .custom-product-info{ flex:1; }
+  .custom-product-info h3{ font-size:2rem; margin-bottom:16px; }
+  .custom-product-info p{ color:#666; margin-bottom:24px; }
+
+  .custom-selection-group{ margin-bottom:24px; }
+  .custom-selection-group h4{ margin-bottom:12px; font-weight:600; }
+
+  .custom-color-options{ display:flex; gap:12px; margin-bottom:16px; }
+  .custom-color-circle{ width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:border-color 0.2s; }
+  .custom-color-circle.selected{ border:2px solid #007aff; outline:2px solid #a4c9e4; }
+
+
+  .custom-capacity-options{ display:flex; flex-direction:column; gap:8px; }
+  .custom-capacity-box{ padding:12px 16px; border:1px solid #ddd; border-radius:6px; cursor:pointer; transition:all 0.2s; }
+  .custom-capacity-box.selected{ border-color:#007aff; outline:2px solid #a4c9e4; }
+
+  .custom-price-display{ margin:24px 0; }
+  .custom-price{ font-size:1.2rem; font-weight:700; color:#007aff; }
+
+  .custom-add-to-cart-btn{ background:#007aff; color:#fff; border:none; padding:14px 24px; border-radius:8px; font-weight:600; cursor:pointer; transition:background 0.2s; }
+  .custom-add-to-cart-btn:hover{ background:#0056cc; }
+
   /* ========== Apple Quantity Modal ========== */
   .quantity-selector{ text-align:center; padding:20px 0; }
   .quantity-selector h3{ margin:0 0 8px; color:var(--text); }
@@ -574,6 +646,67 @@
     .apple-title{ font-size:1.1rem; }
     .product-card{ padding:14px; }
     .thumb-container img{ width:36px; height:36px; }
+  }
+
+  /* Custom Product Responsive */
+  @media (max-width: 768px){
+    .custom-product-card{
+      flex-direction: column;
+      gap: 20px;
+      padding: 20px;
+    }
+    .custom-product-image img{
+      width: 100%;
+      height: auto;
+      max-width: none;
+    }
+    .custom-product-info h3{
+      font-size: 1.5rem;
+    }
+  
+  /* ========== Tombol Checkout (Minimalis & Abu-abu Soft) ========== */
+.premium-checkout-button {
+  /* Warna latar belakang abu-abu soft/netral */
+  background: #E0E0E0; 
+  /* Warna teks hitam lembut */
+  color: #333333; 
+  border: 1px solid #CCCCCC; /* Border tipis */
+  padding: 12px 24px; /* Ukuran sedang */
+  border-radius: 8px;
+  font-weight: 600; /* Font weight sedikit lebih rendah */
+  font-size: 1rem; /* Ukuran teks standar */
+  cursor: pointer;
+  width: 100%; /* Lebar penuh di modal */
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 20px;
+  box-shadow: none; /* Menghilangkan bayangan untuk kesan minimalis */
+  transition: all 0.25s ease;
+}
+
+.premium-checkout-button:hover {
+  /* Warna latar belakang sedikit lebih gelap saat di-hover */
+  background: #CCCCCC; 
+  /* Efek sedikit terangkat, tapi sangat halus */
+  transform: translateY(-1px); 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Bayangan halus */
+}
+
+/* Penyesuaian untuk tombol di modal quantity */
+#apple-quantity-modal .premium-checkout-button {
+    margin-top: 20px;
+}
+
+/* Menambahkan style untuk menghilangkan tombol default yang 'emas' di modal detail, agar konsisten */
+#add-to-cart-detail {
+    background: #E0E0E0; 
+    color: #333333; 
+    border: 1px solid #CCCCCC; 
+}
+#add-to-cart-detail:hover {
+    background: #CCCCCC;
+}
   }
 
   
