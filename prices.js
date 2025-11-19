@@ -1,3 +1,4 @@
+
 // ======================================================
 //                  PRICES.JS - Price Classes
 // ======================================================
@@ -11,7 +12,7 @@ class ProductPrice {
     getCapacityMultiplier(capacity) {
         const multipliers = {
             '128 GB': 1.0,    // 11.499.000
-            '256 GB': 1.172,  // 13.499.000 (11.499.000 * 1.172 ≈ 13.499.000)
+            '256 GB': 1.1739130434782608695652173913,  // 13.499.000 (11.499.000 * 1.1739130434782608695652173913 = 13.499.000)
             '512 GB': 1.5,    // 17.248.500 (11.499.000 * 1.5 = 17.248.500)
             '1 TB': 2.0,      // 22.998.000 (11.499.000 * 2.0 = 22.998.000)
             '2 TB': 2.5
@@ -23,7 +24,7 @@ class ProductPrice {
     getCapacityMultiplierForIPadAir13(capacity) {
         const multipliers = {
             '128 GB': 1.0,    // 11.499.000
-            '256 GB': 1.172   // 13.499.000
+            '256 GB': 1.17392816766675367468   // 13.499.000
         };
         return multipliers[capacity] || 1.0;
     }
@@ -86,4 +87,7 @@ class ProductPrice {
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ProductPrice;
+
+
+
 }
