@@ -1,3 +1,4 @@
+
 // ======================================================
 //                  SCRIPT.JS FINAL (BERSIH & DIPERBAIKI)
 // ======================================================
@@ -618,24 +619,49 @@ window.addEventListener('load', () => {
     // ------------------------------------------------------
     // 13. CUSTOM PRODUCT SELECTION LOGIC
     // ------------------------------------------------------
-    function initializeCustomProductSelections() {
-        document.querySelectorAll('.custom-product-card').forEach(product => {
-            const productId = product.dataset.productId;
-            const basePrice = parseInt(product.dataset.basePrice);
+    // script.js: Di dalam fungsi initializeCustomProductSelections()
+function initializeCustomProductSelections() {
+    document.querySelectorAll('.custom-product-card').forEach(product => {
+        const productId = product.dataset.productId;
+        const basePrice = parseInt(product.dataset.basePrice);
 
-            // Initialize selections if not exists
-            if (!customProductSelections[productId]) {
-                customProductSelections[productId] = {
-                    color: 'Space Gray',
-                    capacity: '128 GB',
-                    price: basePrice
-                };
+        // ... (Logika Inisialisasi customProductSelections[productId] tetap sama) ...
+
+        if (!customProductSelections[productId]) {
+            customProductSelections[productId] = {
+                color: 'Space Gray',
+                capacity: '128 GB',
+                price: basePrice
+            };
+        }
+
+        // --- TAMBAHKAN LOGIKA INI UNTUK RECALCULATE PRICE SAAT LOAD ---
+        // Recalculate price based on current multipliers to ensure updated prices
+        const priceCalculator = new ProductPrice(basePrice);
+        customProductSelections[productId].price = priceCalculator.calculatePriceForIPadAir13(customProductSelections[productId].capacity);
+        // --------------------------------------------------------
+
+        // --- TAMBAHKAN LOGIKA INI UNTUK UPDATE UI SAAT LOAD ---
+        const currentCapacity = customProductSelections[productId].capacity;
+        const capacityBoxes = document.querySelectorAll(`.custom-capacity-options[data-product-id="${productId}"] .custom-capacity-box`);
+
+        capacityBoxes.forEach(box => {
+            box.classList.remove('selected');
+            if (box.dataset.capacity === currentCapacity) {
+                box.classList.add('selected');
+                // Pastikan display name juga di update saat load
+                const displayName = document.getElementById(`custom-selected-capacity-${productId}`);
+                if (displayName) {
+                    displayName.textContent = currentCapacity;
+                }
             }
-
-            // Update price display
-            updateCustomPriceDisplay(productId);
         });
-    }
+        // --------------------------------------------------------
+
+        // Update price display
+        updateCustomPriceDisplay(productId);
+    });
+}
 
     function updateCustomPriceDisplay(productId) {
         const selection = customProductSelections[productId];
@@ -675,40 +701,59 @@ window.addEventListener('load', () => {
 
 
 
-    // Custom capacity selection logic
-    document.querySelectorAll('.custom-capacity-box').forEach(box => {
-        box.addEventListener('click', function() {
-            const productId = this.closest('.custom-capacity-options').dataset.productId;
-            const capacity = this.dataset.capacity;
-            const basePrice = parseInt(document.querySelector(`[data-product-id="${productId}"]`).dataset.basePrice);
+    // Custom capacity selection logic - KODE YANG SUDAH DIPERBAIKI
+// script.js - Custom capacity selection logic (Ganti seluruh blok ini)
+document.querySelectorAll('.custom-capacity-box').forEach(box => {
+    box.addEventListener('click', function() {
+        
+        // --- 1. Ambil Referensi Card untuk data yang aman ---
+        const productCard = this.closest('.custom-product-card');
+        if (!productCard) return; // Pengamanan
 
-            // Calculate new price for iPad Air 13 custom (only 128GB and 256GB)
-            const priceCalculator = new ProductPrice(basePrice);
-            const newPrice = priceCalculator.calculatePriceForIPadAir13(capacity);
+        const productId = productCard.dataset.productId;
+        const basePrice = parseInt(productCard.dataset.basePrice); // AMBIL DARI productCard BUKAN document.querySelector
+        const capacity = this.dataset.capacity;
+        
+        if (isNaN(basePrice)) {
+            console.error("DEBUG: Base Price tidak valid. Gagal kalkulasi harga.");
+            return;
+        }
 
-            // Update selection
-            customProductSelections[productId].capacity = capacity;
-            customProductSelections[productId].price = newPrice;
+        // --- 2. Kalkulasi Harga ---
+        const priceCalculator = new ProductPrice(basePrice);
+        let newPrice = priceCalculator.calculatePriceForIPadAir13(capacity);
+        
+        // Fallback jika newPrice tidak valid (Walaupun prices.js sudah benar)
+        if (isNaN(newPrice)) {
+            newPrice = basePrice;
+        }
 
-            // Update UI
-            document.querySelectorAll(`.custom-capacity-options[data-product-id="${productId}"] .custom-capacity-box`).forEach(b => b.classList.remove('selected'));
-            this.classList.add('selected');
+        // --- 3. Update Data Model ---
+        customProductSelections[productId].capacity = capacity;
+        customProductSelections[productId].price = newPrice;
 
-            // Update display name
-            const displayName = document.getElementById(`custom-selected-capacity-${productId}`);
-            if (displayName) {
-                displayName.textContent = capacity;
-            }
+        // --- 4. Update UI: Hapus 'selected' dari semua di dalam container ini ---
+        // Kita bisa ambil container dari parent-nya custom-capacity-box
+        const capacityOptionsContainer = this.closest('.custom-capacity-options');
 
-            // Update price display
-            updateCustomPriceDisplay(productId);
+        capacityOptionsContainer.querySelectorAll('.custom-capacity-box').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
 
-            // Save to localStorage
-            saveToLocalStorage();
+        // Update display name
+        const displayName = document.getElementById(`custom-selected-capacity-${productId}`);
+        if (displayName) {
+            displayName.textContent = capacity;
+        }
 
-            console.log(`Kapasitas custom dipilih untuk ${productId}:`, capacity, `Harga:`, rupiah(newPrice));
-        });
+        // Update price display
+        updateCustomPriceDisplay(productId);
+
+        // Save to localStorage
+        saveToLocalStorage();
+
+        console.log(`✅ Klik Berhasil: Kapasitas custom dipilih untuk ${productId} (${capacity}), Harga: ${rupiah(newPrice)}`);
     });
+});
 
     // Custom add to cart logic
     document.querySelectorAll('.custom-add-to-cart-btn').forEach(btn => {
@@ -871,4 +916,7 @@ window.addEventListener('load', () => {
     document.querySelectorAll('.animate-on-scroll, .section-title')
         .forEach(el => revealObs.observe(el));
 
-});
+
+
+        
+})
